@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoSort — Sort it right, right now</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="line-board" aria-hidden="true">
+    <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
+    <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
+    <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
+    <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">♻</span>
+      <span class="brand-name">ECOSORT</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="scan">01 · Scan</button>
+      <button class="tab" data-tab="map">02 · Report Map</button>
+      <button class="tab" data-tab="board">03 · Leaderboard</button>
+      <button class="tab" data-tab="schedule">04 · Pickup</button>
+      <button class="tab" data-tab="dash">05 · City Dashboard</button>
+    </nav>
+    <div class="score-chip">
+      <span class="score-label">YOUR POINTS</span>
+      <span class="score-value" id="userScore">0</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ============ SCAN ============ -->
+    <section class="panel active" id="panel-scan">
+      <div class="hero">
+        <h1>Point your camera.<br>The bin sorts itself.</h1>
+        <p class="hero-sub">EcoSort runs a vision model in your browser, matches what it sees against a municipal
+          waste-stream table, and tells you exactly which bin it belongs in — before you even walk to the curb.</p>
+      </div>
+
+      <div class="scan-grid">
+        <div class="scan-input card">
+          <div class="card-eyebrow">INPUT</div>
+          <div id="videoWrap" class="video-wrap">
+            <video id="cam" autoplay playsinline muted></video>
+            <canvas id="camCanvas" hidden></canvas>
+            <div class="scan-line"></div>
+          </div>
+          <div class="scan-controls">
+            <button id="startCam" class="btn btn-primary">Start Camera</button>
+            <button id="captureBtn" class="btn btn-outline" disabled>Capture &amp; Sort</button>
+            <label class="btn btn-ghost" for="fileInput">Upload Photo</label>
+            <input type="file" id="fileInput" accept="image/*" hidden />
+          </div>
+          <div class="model-status" id="modelStatus">Loading vision model…</div>
+        </div>
+
+        <div class="scan-output">
+          <div class="conveyor card">
+            <div class="card-eyebrow">SORTING LINE</div>
+            <div class="lanes">
+              <div class="lane" data-cat="recyclable"><span class="lane-dot"></span>Recyclable</div>
+              <div class="lane" data-cat="compost"><span class="lane-dot"></span>Compost</div>
+              <div class="lane" data-cat="landfill"><span class="lane-dot"></span>Landfill</div>
+              <div class="lane" data-cat="hazardous"><span class="lane-dot"></span>Hazardous</div>
+            </div>
+            <div class="item-puck" id="itemPuck" hidden>ITEM</div>
+          </div>
+
+          <div class="result-card card" id="resultCard" hidden>
+            <div class="card-eyebrow">RESULT</div>
+            <div class="result-top">
+              <span class="result-swatch" id="resultSwatch"></span>
+              <span class="result-label" id="resultLabel">—</span>
+            </div>
+            <p class="result-guess">Model guess: <span id="resultRaw">—</span></p>
+            <p class="result-tip" id="resultTip"></p>
+            <p class="result-points">+<span id="resultPoints">10</span> pts logged to your streak</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MAP ============ -->
+    <section class="panel" id="panel-map">
+      <div class="panel-head">
+        <h2>Community report map</h2>
+        <p>Overflowing bins and illegal dumping don't wait for a scheduled truck. Click anywhere on the map to file a
+          report — it lands on the city dashboard instantly.</p>
+      </div>
+      <div class="map-layout">
+        <div id="map" class="card map-card"></div>
+        <form class="card report-form" id="reportForm">
+          <div class="card-eyebrow">NEW REPORT</div>
+          <label>Location<span id="pickedLatLng" class="muted">click the map</span></label>
+          <label>Severity
+            <select id="severity">
+              <option value="low">Low — mostly full</option>
+              <option value="medium" selected>Medium — overflowing</option>
+              <option value="high">High — spilling / hazard</option>
+            </select>
+          </label>
+          <label>Notes
+            <textarea id="note" rows="3" placeholder="e.g. bin behind Ivor Wynne, overflow onto sidewalk"></textarea>
+          </label>
+          <button type="submit" class="btn btn-primary" disabled id="submitReport">Pin it</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ LEADERBOARD ============ -->
+    <section class="panel" id="panel-board">
+      <div class="panel-head">
+        <h2>Leaderboard</h2>
+        <p>Every correct scan and every filed report earns points. Streaks push you up the block.</p>
+      </div>
+      <div class="card">
+        <table class="board-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody id="boardBody">
+            <tr>
+              <td colspan="3" class="muted">No activity yet — go scan something.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ SCHEDULE ============ -->
+    <section class="panel" id="panel-schedule">
+      <div class="panel-head">
+        <h2>Pickup schedule</h2>
+        <p>Pick your collection zone to see this week's curb days.</p>
+      </div>
+      <div class="card schedule-card">
+        <label for="zoneSelect">Zone</label>
+        <select id="zoneSelect">
+          <option value="A">Zone A</option>
+          <option value="B">Zone B</option>
+          <option value="C">Zone C</option>
+          <option value="D">Zone D</option>
+        </select>
+        <div class="schedule-grid" id="scheduleGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="panel" id="panel-dash">
+      <div class="panel-head">
+        <h2>City dashboard</h2>
+        <p>Live rollup a municipal ops team would watch: what's being scanned, and where the hotspots are.</p>
+      </div>
+      <div class="dash-grid">
+        <div class="card stat-card"><span class="stat-num" id="statScans">0</span><span class="stat-label">Total
+            Scans</span></div>
+        <div class="card stat-card"><span class="stat-num" id="statReports">0</span><span class="stat-label">Reports
+            Filed</span></div>
+        <div class="card stat-card"><span class="stat-num" id="statUsers">0</span><span class="stat-label">Active
+            Users</span></div>
+        <div class="card chart-card">
+          <div class="card-eyebrow">CATEGORY BREAKDOWN</div>
+          <canvas id="statsChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>EcoSort · built for SC4k · Coders Coliseum 2026, By Joshua Karikaalan Julius A</span>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
