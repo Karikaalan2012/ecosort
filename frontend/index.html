@@ -3,7 +3,11 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1C1D1A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>EcoSort — Sort it right, right now</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
@@ -16,8 +20,6 @@
 <body>
 
   <div class="line-board" aria-hidden="true">
-    <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
-    <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
     <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
     <span>RECYCLABLE</span><span>COMPOST</span><span>LANDFILL</span><span>HAZARDOUS</span>
   </div>
@@ -104,7 +106,8 @@
         <div id="map" class="card map-card"></div>
         <form class="card report-form" id="reportForm">
           <div class="card-eyebrow">NEW REPORT</div>
-          <label>Location<span id="pickedLatLng" class="muted">click the map</span></label>
+          <button type="button" class="btn btn-outline" id="useLocationBtn">📍 Use My Location</button>
+          <label>Location<span id="pickedLatLng" class="muted">click the map or use your location</span></label>
           <label>Severity
             <select id="severity">
               <option value="low">Low — mostly full</option>
@@ -185,7 +188,7 @@
   </main>
 
   <footer>
-    <span>EcoSort · built for SC4k · Coders Coliseum 2026, By Joshua Karikaalan Julius A</span>
+    <span>EcoSort · built for DeltaHacks 13 · client-side vision, zero cloud ML cost</span>
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
