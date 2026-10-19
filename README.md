@@ -89,4 +89,4 @@ Then visit `http://127.0.0.1:8000`. Allow camera access when prompted, or use "U
 - Persistent storage (Postgres) + auth, replacing the in-memory demo store.
 
 ---
-Built for DeltaHacks 13 · garbage management, application track.
+Built by Joshua Karikaalan Julius A
